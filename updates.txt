@@ -1,0 +1,103 @@
+The Problem:
+
+You have the Padding(child: Card(...)) widget directly inside the main Column's children list, and then the Expanded(child: TabBarView(...)) widget also directly inside the Column's children list.
+
+body: Column(
+      children: [
+        Padding( // Child 1 of Column
+           child: Card(...)
+        ),
+        Expanded( // Child 2 of Column
+           child: TabBarView(...)
+        ),
+      ], // End of Column Children
+    ),
+Use code with caution.
+Dart
+The Expanded widget must be a direct child of a Row, Column, or Flex widget to work correctly. It tells that parent how much space its own child (TabBarView) should occupy. Your structure is correct in this regard.
+
+However, the error Too many positional arguments finishing at the Column inside the Card implies the parser is getting confused before it even gets to parsing the Expanded widget correctly. This almost always means there's a syntax error within or at the end of the Padding(child: Card(...)) block.
+
+Let's Re-examine the Card Content and its Closing:
+
+Look very carefully at the code inside the Padding and Card block (from roughly line 445 down to where the Card's closing parenthesis ) and the Padding's closing parenthesis ) are, before the comma that separates it from the Expanded widget in the main Column's children list).
+
+Padding( // START (around L443)
+          padding: const EdgeInsets.fromLTRB(12.0, 12.0, 12.0, 0),
+          child: Card(
+             elevation: 2,
+             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+             child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                child: Column(
+                   crossAxisAlignment: CrossAxisAlignment.start,
+                   children: [
+                      // Wrap with connection details
+                      Wrap(
+                         spacing: 12.0, runSpacing: 4.0, crossAxisAlignment: WrapCrossAlignment.center,
+                         children: [
+                           _buildDetailRow(theme, Icons.dns_outlined, '${widget.server.host}:${widget.server.port}'),
+                           _buildDetailRow(theme, Icons.person_outline, widget.server.user),
+                           _buildDetailRow(theme, widget.server.authMethod == AuthenticationMethod.managedKey ? Icons.vpn_key_outlined : Icons.password_outlined, authDetail),
+                         ], // <<< Wrap children ']'
+                      ), // <<< Wrap ')'
+
+                      // Error display
+                      if (_connectionStatus == SshConnectionStatus.error && _connectionError != null)
+                        Padding(
+                           padding: const EdgeInsets.only(top: 12.0),
+                           child: Text('Error: $_connectionError', style: TextStyle(color: theme.colorScheme.error)),
+                        ),
+
+                      const SizedBox(height: 16),
+
+                      // Connect Button
+                      if (_connectionStatus != SshConnectionStatus.connected)
+                         Center(
+                            child: ElevatedButton.icon(
+                               icon: const Icon(Icons.power_settings_new),
+                               label: Text( _connectionStatus == SshConnectionStatus.connecting ? 'Connecting...' : 'Connect' ),
+                               onPressed: (_connectionStatus == SshConnectionStatus.connecting) ? null : _connectToServer,
+                               style: ElevatedButton.styleFrom( /* ... style ... */ ),
+                            ), // <<< ElevatedButton ')'
+                         ), // <<< Center ')'
+
+                   ], // <<< Column children ']'
+                ), // <<< Inner Padding ')'
+             ), // <<< Card child ')'
+          ), // <<< Outer Padding child ')'
+        ), // <<< Outer Padding ')' - IS THIS THE ONE MISSING before L545?
+
+        // The next widget in the main Column's children list:
+        Expanded( // START (around L547)
+           child: _tabs.isEmpty
+              ? const Center(child: Text('Connect to server to see available actions.'))
+              : TabBarView(
+                  controller: _tabController,
+                  children: _tabViews,
+                ),
+        ), // <<< Expanded ')'
+Use code with caution.
+Dart
+Hypothesis: The closing parenthesis ) for the outer Padding widget (the one containing the Card) is likely missing right before the Expanded widget starts. This makes the parser think Expanded is somehow nested inside Padding incorrectly.
+
+Tell Claude: "Check lib/screens/server_detail_screen.dart around line 545. Make absolutely sure there is a closing parenthesis ) after the Card(...) block and before the Expanded(...) widget begins. This parenthesis closes the outer Padding widget."
+
+// lib/screens/server_detail_screen.dart -> build method -> Main Column children
+
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12.0, 12.0, 12.0, 0),
+          child: Card(
+            // ... ALL the Card content (Wrap, Error, Button) ...
+          ), // Closing Card ')'
+        ), // <<< THIS closing parenthesis for Padding might be missing or misplaced
+
+        // Comma separating Padding from Expanded - Should exist
+        , // <<< Check if this comma is present
+
+        Expanded( // Start of Expanded widget
+          child: TabBarView(...),
+        ), // Closing Expanded ')'
+
+      ], // Closing Column children ']'

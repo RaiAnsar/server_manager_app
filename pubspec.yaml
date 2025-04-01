@@ -1,0 +1,43 @@
+name: server_manager_app
+description: A mobile app to manage servers.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0' # Use an appropriate SDK constraint
+
+dependencies:
+  flutter:
+    sdk: flutter
+  uuid: ^4.4.0 # Check pub.dev for the absolute latest version if desired
+
+  # For Securely Storing Server Credentials
+  flutter_secure_storage: ^10.0.0-beta.4 # Check pub.dev for latest version
+
+  # For SSH Connections (Choose one, dartssh2 is often preferred for purity)
+  dartssh2: ^2.8.2        # Check pub.dev for latest version
+  # Or ssh2: ^2.2.3      # Check pub.dev for latest version (might need platform specific setup)
+
+  # For State Management (Simple & Good for Start)
+  provider: ^6.0.5         # Check pub.dev for latest version
+
+  # For persistent storage
+  shared_preferences: ^2.2.3  # Added for storing server list metadata
+
+  # Icons (Optional but standard)
+  cupertino_icons: ^1.0.2
+  
+  # Terminal emulator package
+  xterm: ^4.0.0 # Check pub.dev for latest version
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  # To add assets to your application, add an assets section, like this:
+  # assets:
+  #   - images/a_dot_burr.jpeg
